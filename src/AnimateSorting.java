@@ -36,6 +36,8 @@ import javax.swing.Timer;
  *V - Known Bugs
  *	1. The pause/resume buttons have not been implemented.
  *  2. Animation for heap sort has a bug which we could not find upon to the submission of this assignment.
+ *  
+ *  UPDATE (12/02/2013): The bug for heap sort has been found. It was a tricky bug in the animation thread. 
  *VI- Reference: 
  * 		1. Oracle Java Document.
  * 		2. "Data Structures & Algorithms in Java" - Robert Lafore	
@@ -224,25 +226,25 @@ public class HeapSort implements Runnable{
 
 	
 	boolean suspendFlag = false;
+	boolean suspendFlag2 = false;
 	int size = list_heap.length;
 
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub	
 		//gotta build a heap from the array list_heap
-		
-		System.out.println("Size is " + size);
-		
+		System.out.println("---------- START HEAPIFYING -----------");
 		for (int i = size/2 -1; i>=0; i--){
 				trickleDown(i);
 		}
 		
+		System.out.println("-------- NOW START SORTING --------");
 		//now when we have heap structure, start sorting by removing the head
 		//of the heap and move it to the back
 		for (int i = size -1; i>=0; i--){
 			 //always remove the root which is list_heap[0]
 			swapHeap(0, i);
-			list_heap[i] = remove();
+			
 			
 			synchronized(this) {
 				
@@ -257,6 +259,8 @@ public class HeapSort implements Runnable{
 						}
 				}
 			}
+			
+			list_heap[i] = remove();
 			
 		}
 		
@@ -279,7 +283,7 @@ public class HeapSort implements Runnable{
 		int top = list_heap[index];//save the root
 		while (index < size/2){
 			
-			int leftChild = index*2 + 1;
+			int leftChild = index*2;
 			int rightChild = leftChild +1;
 			
 			if (rightChild < size && list_heap[leftChild] > list_heap[rightChild]){
@@ -295,7 +299,7 @@ public class HeapSort implements Runnable{
 				break; //escape from while loop since the top is already in the right place
 			}
 			
-			swapHeap(largerChild, index);
+			swapHeap(index, largerChild);
 			list_heap[index] = list_heap[largerChild];
 			index = largerChild;
 			list_heap[index] = top;
@@ -307,7 +311,7 @@ public class HeapSort implements Runnable{
 	              
 						try {
 		              	 	wait();
-		        }
+						}
 						catch (InterruptedException e) {
 											
 							System.out.println(" thread interrupted.");
@@ -1399,7 +1403,7 @@ public static void main(String[] args){
 									System.out.print(" [ " + a[i] + " ] ");
 							}
 						
-					/*	System.out.println("------ BUBBLE SORTING ------");
+						System.out.println("------ BUBBLE SORTING ------");
 							
 							bubble= demo.new BubbleSort();
 							
@@ -1429,7 +1433,7 @@ public static void main(String[] args){
 							
 							insert = demo.new InsertSort();
 							
-							(new Thread(insert)).start();*/
+							(new Thread(insert)).start();
 							
 							System.out.println("------ HEAP SORTING ------");
 							
