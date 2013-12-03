@@ -23,6 +23,8 @@ V - Implementation:
 V - Known Bugs
  *	1. The pause/resume buttons have not been implemented.
  *  2. Animation for heap sort has a bug which we could not find upon to the submission of this assignment.
+ * 
+ * UPDATE (12/02/2013): The bug for heap sort has been found. It was a tricky bug in the animation thread. 
 
 VI- Reference: 
  * 		1. Oracle Java Document.
