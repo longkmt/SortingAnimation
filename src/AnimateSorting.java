@@ -99,6 +99,7 @@ public class AnimateSorting extends JPanel  {
 public class InsertSort implements Runnable {
 			
 		boolean suspendFlag = false;
+	
 		
 		public void run() {
 					
@@ -223,78 +224,103 @@ public class HeapSort implements Runnable{
 
 	
 	boolean suspendFlag = false;
-	
-	private void heapSort(int[] a, int k){
-		
-		int i,j;
-		int left_child, right_child, mid_child, root, temp;
-		
-		root = (k-1)/2;
-		
-		for (i = root; i>=0; i--){
-			
-			for (j = root;j>=0;j--){
-				
-				left_child = (2*j)+1;
-				right_child = (2*i)+2;
-				if ((left_child <= k) && (right_child <= k)) {
-						if (a[right_child] >= a[left_child])
-								mid_child = right_child;
-						else
-								mid_child = left_child;
-						
-				}
-				else{
-					
-						if (right_child > k)
-							mid_child = left_child;
-						
-						else
-							
-							mid_child = right_child;
-				}
-				
-				if (a[i] < a[mid_child]){
-					
-					swapHeap(i,mid_child);
-					temp = a[i];
-					a[i] = a[mid_child];
-					a[mid_child] = temp;
-					
-	
-						synchronized(this) {
-					          while(suspendFlag) {
-					             try {
-					            	 System.out.println("suspend flag is now true -> wait");
-					            	 wait();
-											}
-											catch (InterruptedException e) {
-												// TODO Auto-generated catch block
-												System.out.println("Shell thread interrupted.");
-											}
-					          }
-						}
-				}
-				
-			
-			}
-		}
-		
-		temp = a[0];
-		a[0] = a[k];
-		a[k] = temp;
-		
-	}
-	
+	int size = list_heap.length;
+
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-		for (int i =list_heap.length; i>1; i--){
-				heapSort(list_heap, i-1);
+		// TODO Auto-generated method stub	
+		//gotta build a heap from the array list_heap
+		
+		System.out.println("Size is " + size);
+		
+		for (int i = size/2 -1; i>=0; i--){
+				trickleDown(i);
+		}
+		
+		//now when we have heap structure, start sorting by removing the head
+		//of the heap and move it to the back
+		for (int i = size -1; i>=0; i--){
+			 //always remove the root which is list_heap[0]
+			swapHeap(0, i);
+			list_heap[i] = remove();
+			
+			synchronized(this) {
+				
+				while(suspendFlag) {
+	              
+						try {
+		              	 	wait();
+		        }
+						catch (InterruptedException e) {
+											
+							System.out.println(" thread interrupted.");
+						}
+				}
+			}
+			
 		}
 		
 		showResult();
 	}
+	
+	public int remove(){
+		
+		int root = list_heap[0];
+		list_heap[0] = list_heap[--size];
+		trickleDown(0);
+		
+		return root;
+
+	}
+	
+	public void trickleDown(int index){
+		
+		int largerChild;
+		int top = list_heap[index];//save the root
+		while (index < size/2){
+			
+			int leftChild = index*2 + 1;
+			int rightChild = leftChild +1;
+			
+			if (rightChild < size && list_heap[leftChild] > list_heap[rightChild]){
+				
+					largerChild = leftChild;
+					
+			}
+			else{
+					largerChild = rightChild;
+			}
+			
+			if (top >= list_heap[largerChild]){
+				break; //escape from while loop since the top is already in the right place
+			}
+			
+			swapHeap(largerChild, index);
+			list_heap[index] = list_heap[largerChild];
+			index = largerChild;
+			list_heap[index] = top;
+			
+			
+			synchronized(this) {
+				
+				while(suspendFlag) {
+	              
+						try {
+		              	 	wait();
+		        }
+						catch (InterruptedException e) {
+											
+							System.out.println(" thread interrupted.");
+						}
+				}
+			}
+			
+		}
+		
+		
+		
+	}
+	
 	
 	
 	private void showResult(){
@@ -1332,7 +1358,7 @@ public void shellAnimation(final int left, final int right){
 					
 }
 	
-			public static void main(String[] args){
+public static void main(String[] args){
 				
 
 	
@@ -1365,19 +1391,6 @@ public void shellAnimation(final int left, final int right){
 								System.exit(0);
 							}
 						
-							
-							/*
-							a = new int[10];
-							a[0] = 10;
-							a[1] = 4;
-							a[2] = -1;
-							a[3] = -2;
-							a[4] = 5;
-							a[5] = 22;
-							a[6] = -13;
-							a[7] = 0;
-							a[8] = 51;
-							a[9] = 7;*/
 	
 							AnimateSorting demo = new AnimateSorting(a);
 							
@@ -1386,7 +1399,7 @@ public void shellAnimation(final int left, final int right){
 									System.out.print(" [ " + a[i] + " ] ");
 							}
 						
-						System.out.println("------ BUBBLE SORTING ------");
+					/*	System.out.println("------ BUBBLE SORTING ------");
 							
 							bubble= demo.new BubbleSort();
 							
@@ -1412,18 +1425,17 @@ public void shellAnimation(final int left, final int right){
 							
 							(new Thread(merge)).start();
 							
+							System.out.println("------ Insert SORTING ------");
+							
+							insert = demo.new InsertSort();
+							
+							(new Thread(insert)).start();*/
+							
 							System.out.println("------ HEAP SORTING ------");
 							
 							heap = demo.new HeapSort();
 							
 							(new Thread(heap)).start();
-							
-							System.out.println("------ Insert SORTING ------");
-							
-							insert = demo.new InsertSort();
-							
-							(new Thread(insert)).start();
-							
 						
 		
 							
@@ -1434,18 +1446,10 @@ public void shellAnimation(final int left, final int right){
 							frame.setSize(1024,800);
 							frame.setResizable(true);
 							frame.setVisible(true);
-					    frame.setLayout(null); 
+							frame.setLayout(null); 
 					    
 					    
-					    
-		          		          
-			
-				
-			}
-			
-			
-			
-			
+}			
 			
 			public void paintComponent(Graphics g) {
 				
@@ -1454,96 +1458,7 @@ public void shellAnimation(final int left, final int right){
 				
 			}		
 			
-	/*void suspend() {
-				System.out.println("SUSPEND IS CALLED - suspend flag is now true ");
-			      suspensionFlag = true;
-			   }
-			
-			synchronized void resume() {
-				
-				System.out.println("RESUME IS CALLED - suspend flag is now false ");
-			      suspensionFlag = false;
-			      notifyAll();
-			   }*/
 
-/*
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-
-				
-				System.out.println("Before: ");
-				for (int i=0; i<list_merge.length; i++){
-						System.out.print(" [ " + a[i] + " ] ");
-				}
-			
-			System.out.println("------ BUBBLE SORTING ------");
-				
-				bubble= demo.new BubbleSort();
-				
-				(new Thread(bubble)).start(); //run buble sort in a new thread
-				
-				System.out.println("------ QUICK SORTING ------");
-				
-				quick = demo.new QuickSort();
-				
-				(new Thread(quick)).start();
-				
-				
-				System.out.println("------ SHELL SORTING ------");
-				
-				shell = demo.new ShellSort();
-				
-				(new Thread(shell)).start();
-
-				
-				System.out.println("------ MERGE SORTING ------");
-				
-				merge = demo.new MergeSort();
-				
-				(new Thread(merge)).start();
-				
-			
-
-				
-				//draw a jframe
-				
-			/*	JButton bubble_pause_button = new JButton("Pause");
-				bubble_pause_button.setSize(80,40);
-				bubble_pause_button.setLocation(jBubble.getLocation().x + 500, jBubble.getLocation().y + 50);
-				bubble_pause_button.addActionListener(new ActionListener() {
-
-
-					public void actionPerformed(ActionEvent e) {
-						suspend();
-						
-					}
-					
-					
-					
-				});
-				
-				JButton bubble_resume_button = new JButton("Resume");
-				bubble_resume_button.setSize(80,40);
-				bubble_resume_button.setLocation(jBubble.getLocation().x + 500, jBubble.getLocation().y + 100);
-				bubble_resume_button.addActionListener(new ActionListener() {
-
-
-					public void actionPerformed(ActionEvent e) {
-						resume();
-						
-					}
-					
-					
-					
-				});
-				
-
-		    
-
-
-				
-			}*/
 
 
 
